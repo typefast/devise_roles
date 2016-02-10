@@ -1,10 +1,8 @@
 class UsersController < ApplicationController
   before_action :authenticate_user!
+  before_action :admin_only, :except => :show
 
   def index
-    unless current_user.admin?
-      redirect_to :back, :alert => "Access denied."
-    end
     @users = User.all
   end
 
@@ -19,10 +17,7 @@ class UsersController < ApplicationController
   
   def update
     @user = User.find(params[:id])
-    unless current_user.admin?
-      redirect_to :back, :alert => "Access denied."
-    end
-    
+ 
     if @user.update_attributes(secure_params)
       redirect_to users_path, :notice => "User Updated"
     else
@@ -32,14 +27,18 @@ class UsersController < ApplicationController
   
   def destroy
     user = User.find(params[:id])
-    unless current_user.admin?
-      redirect_to :back, :alert => "Access denied."
-    end
+ 
     user.destroy
     redirect_to users_path, :notice => "User deleted."
   end
   
   private
+    
+    def admin_only
+      unless current_user.admin?
+        redirect_to :back, :alert => "Access denied."
+      end
+    end
     
     def secure_params
       params.require(:user).permit(:role)
